@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="Java/src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/gson-2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jasperreports-1.1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgepes-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgearmazem-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgefgv-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgecheckout-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgeimobilizado-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgeworkflow-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgecot-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgecontab-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgeliv-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgectbz-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgewms-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgeprod-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgegi-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgeinv-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgepesq-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgeserv-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgecom-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgefin-model.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mge-modelcore.jar" sourcepath="C:/Sankhya/Java/mge-modelcore_source.zip"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-codec-1.3.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-lang-2.4.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jdom.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/json-20140107.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sankhyaw-gradle-5.5.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/itextpdf-5.1.1.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/hnztms.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/HnzUtils.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/joda-time-2.12.5.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-codec-1.16.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-collections4-4.4.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-io-2.15.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/log4j-api-2.21.1.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/poi-5.2.5.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/SparseBitSet-1.3.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/okhttp-3.9.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/okio-1.13.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-net-1.2.1.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/oro-2.0.8.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/Evento_Formulario.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/html2pdf-4.0.5.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sanutil.jar" sourcepath="C:/Sankhya/Java/sanutil_source..zip"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/SankhyaW-extensions.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jape.jar" sourcepath="C:/Sankhya/Java/jape_source.zip"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jape-3.27b151.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/json-simple-1.1.1.jar" sourcepath="C:/Sankhya/Java/json-simple-1.1.1_source.zip"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sancrypt.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sanws.jar" sourcepath="C:/Sankhya/Java/sources"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/ganymed-ssh2-261.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sankhya-commons.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jxls-core-1.0.1-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mge-modulemgr.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/dwf.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sannfe.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-lang3-3.9.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-lang3-3.9-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-lang3-3.9-test-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-lang3-3.9-tests.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sanutil_SPS.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/mgecom-model-client.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-codec-1.10.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-codec-1.10-javadoc.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-codec-1.10-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-codec-1.10-tests.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-codec-1.10-test-sources.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jbossall-client.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jboss-j2ee.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/servlet.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/javax.ws.rs-api-2.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/commons-fileupload-1.3.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/javax.mail.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/SWService.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/org.apache.commons.httpclient.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/xstream-1.4.4.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/itextpdf-5.4.0.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jsch-0.1.42.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/poi-ooxml-3.9.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jxl-2.6.12.jar"/>
+	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jackson-all-1.9.0.jar"/>
+	<classpathentry kind="output" path="Java/bin"/>
+</classpath>
