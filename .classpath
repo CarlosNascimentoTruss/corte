@@ -52,7 +52,6 @@
 	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sanutil.jar" sourcepath="C:/Sankhya/Java/sanutil_source..zip"/>
 	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/SankhyaW-extensions.jar"/>
 	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jape.jar" sourcepath="C:/Sankhya/Java/jape_source.zip"/>
-	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/jape-3.27b151.jar"/>
 	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/json-simple-1.1.1.jar" sourcepath="C:/Sankhya/Java/json-simple-1.1.1_source.zip"/>
 	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sancrypt.jar"/>
 	<classpathentry kind="lib" path="C:/Sankhya/Java/lib/sanws.jar" sourcepath="C:/Sankhya/Java/sources"/>
