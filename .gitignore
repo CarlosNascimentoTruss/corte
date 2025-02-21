@@ -1,7 +1,7 @@
 .gradle
 /build/
 /jbossgenerated/
-/.idea/
+/.idea_old/
 /dist/
 
 # Ignore Gradle GUI config
@@ -28,7 +28,7 @@ gradle-app.setting
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-.idea/*
+.idea_old/*
 
 # Package Files #
 *.jar
