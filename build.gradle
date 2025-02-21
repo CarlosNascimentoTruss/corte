@@ -1,0 +1,141 @@
+plugins {
+    id 'java'
+}
+group = 'br.com.sankhya.dstech'
+def versao = readVersion()
+def versaoFinal = "${project.name}-${versao}"
+def skwVersion = "4.30"
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://maven.sankhya.com.br/repository/maven-public/")
+        allowInsecureProtocol = true
+    }
+}
+
+dependencies {
+    implementation 'com.squareup.okhttp3:okhttp:3.9.0'
+    implementation 'org.json:json:20210307'
+    compileOnly 'javax.ejb:ejb-api:3.0'
+    compileOnly 'javax.servlet:servlet-api:2.3'
+
+    implementation "br.com.sankhya:jape:$skwVersion"
+    implementation "br.com.sankhya:mge-modelcore:$skwVersion"
+    implementation "br.com.sankhya:mgecom-model:$skwVersion"
+    implementation "br.com.sankhya:mgecot-model:$skwVersion"
+    implementation "br.com.sankhya:mgeinv-model:$skwVersion"
+    implementation "br.com.sankhya:sanutil:$skwVersion"
+    implementation "br.com.sankhya:sanws:$skwVersion"
+    implementation "br.com.sankhya:mge-param:$skwVersion"
+    implementation 'br.com.sankhya:cuckoo:master'
+    implementation "br.com.sankhya:dwf:$skwVersion"
+    implementation 'com.google.code.gson:gson:2.1'
+    implementation 'jdom:jdom:1.0'
+    //Trabalhar com arquivos xls
+    //implementation("org.apache.poi:poi:3.9")
+    //implementation("org.apache.poi:poi-ooxml:3.9")
+
+    // para lib local
+    //implementation(file("path"))
+
+    //extra
+    implementation 'commons-codec:commons-codec:1.17.1'
+
+    //testes
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['Java/src']
+        }
+        resources {
+            srcDirs = ["Java/resources"]
+        }
+    }
+}
+
+//Daniel - Limpa + coisas
+tasks.clean {
+    delete("jbossgenerated")
+    println("jbosgenerated removido")
+    delete("dist")
+    println("dist removido")
+}
+
+tasks.register('Gerar Jar Modelo - btacao', Jar) {
+    group = "daniel"
+    archiveBaseName.set("btacao-${versaoFinal}")
+    destinationDirectory.set(file("dist"))
+    include 'br/com/sankhya/dstech/helper/**'
+    include 'br/com/sankhya/dctm/inventario/botaoacao/**'
+    //destinationDirectory.set(file("$buildDir/outputDir"))
+    from {
+        sourceSets.main.output
+    }
+}
+
+tasks.register('Gerar Jar Modelo - eventos', Jar) {
+    group = "daniel"
+    archiveBaseName.set("eventos-${versaoFinal}")
+    destinationDirectory.set(file("dist"))
+    include 'br/com/sankhya/dstech/inventario/eventos/**'
+    from {
+        sourceSets.main.output
+    }
+    //from('Java/resources') {
+    //    include 'pasta/*.sql'
+    //}
+}
+
+
+tasks.register('incrementVersion') {
+    group = "daniel"
+    doLast {
+        def newVersion = incrementVersion()
+        println "Version incremented to: ${newVersion}"
+    }
+}
+//tasks.register('buildApontamentoServicoJar', Jar) {
+//    group = "daniel"
+//    archiveBaseName.set('apontamentoservico')
+//    from {
+//        sourceSets.main.output
+//    }
+
+//    include 'br/com/sankhya/dstech/apontamentoservico/**'
+//    include 'br/com/sankhya/dstech/helper/**'
+//    include 'br/com/sankhya/dstech/enums/**'
+//    destinationDirectory.set(file("$buildDir/outputDir"))
+//}
+
+// Function to read the version from the properties file
+def readVersion() {
+    def properties = new Properties()
+    file("version.properties").withInputStream { properties.load(it) }
+    return properties.getProperty("version")
+}
+
+// Function to increment the version
+def incrementVersion() {
+    def properties = new Properties()
+    def versionFile = file("version.properties")
+    versionFile.withInputStream { properties.load(it) }
+
+    def version = properties.getProperty("version")
+    def (major, minor, patch) = version.tokenize('.')
+    patch = patch.toInteger() + 1
+    def newVersion = "${major}.${minor}.${patch}"
+
+    properties.setProperty("version", newVersion)
+    versionFile.withOutputStream { properties.store(it, null) }
+
+    return newVersion
+}
