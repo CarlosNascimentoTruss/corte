@@ -32,6 +32,12 @@ dependencies {
     implementation "br.com.sankhya:dwf:$skwVersion"
     implementation 'com.google.code.gson:gson:2.1'
     implementation 'jdom:jdom:1.0'
+    implementation 'br.com.sankhya:sankhya-commons:5.0.7'
+    implementation 'br.com.sankhya:mgectbz-model-client:4.23.100'
+    implementation 'br.com.sankhya:print-service-connector:4.27.10'
+    implementation 'br.com.sankhya:print-service-base:4.33.82'
+    implementation 'net.sf.jasperreports:jasperreports:4.0.1'
+    implementation 'br.com.sankhya.mgeprod-module:mgeprod-model:5.1.8'
     //Trabalhar com arquivos xls
     //implementation("org.apache.poi:poi:3.9")
     //implementation("org.apache.poi:poi-ooxml:3.9")

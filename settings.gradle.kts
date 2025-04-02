@@ -1,2 +1,2 @@
-rootProject.name = "modelo"
+rootProject.name = "truss"
 
