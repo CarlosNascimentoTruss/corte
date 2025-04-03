@@ -12,6 +12,12 @@ import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 
+
+/*
+   Evento na tabela TPRAMP com o objetivo de não permitir realizar o apontamento de materiais com lote inativo e nem com estoque insuficiente.
+   Atendimento ao briefing: https://grupoboticario.kanbanize.com/ctrl_board/301/cards/1705816/details/
+ */
+
 public class ValidaEstoqueApontamento implements EventoProgramavelJava {
 
 
@@ -62,10 +68,12 @@ public class ValidaEstoqueApontamento implements EventoProgramavelJava {
             BigDecimal qtdApontada = newVO.asBigDecimal("QTD");
             BigDecimal codlocal = newVO.asBigDecimal("CODLOCALBAIXA");
 
+            // Validação apenas para itens com preenchimento de lote
             if (controle.equals(" ") || controle == null) {
                 return;
             }
 
+            // Query identificando o lote ativo ou inativo
             NativeSql query = new NativeSql(jdbc);
             query.setNamedParameter("P_CODPROD", codprod);
             query.setNamedParameter("P_CONTROLE", controle);
@@ -76,10 +84,17 @@ public class ValidaEstoqueApontamento implements EventoProgramavelJava {
                 ativoLote = r.getString("ATIVOLOTE");
             }
 
+            //  Se o lote for inativo, lança o erro.
             if(ativoLote.equals("N")) {
                 throw new Exception("Lote do produto " + codprod + " e controle " + controle + " encontra-se inativo.");
             }
 
+
+            /*
+                Query obtendo a quantidade disponível em estoque para o produto.
+                É considerado aqui o local de baixa na própria TPRAMP, empresa 6, lote ativo, produto e lote sendo apontados.
+
+             */
             NativeSql query2 = new NativeSql(jdbc);
             query2.setNamedParameter("P_CODPROD", codprod);
             query2.setNamedParameter("P_CONTROLE", controle);
@@ -98,8 +113,11 @@ public class ValidaEstoqueApontamento implements EventoProgramavelJava {
                 estoqueDisponivel = r2.getBigDecimal("ESTOQUEDISPONIVEL");
             }
 
+            /*
+              Caso estoque for indisponível, lança mensagem de erro.
+             */
             if(qtdApontada.compareTo(estoqueDisponivel)> 0){
-                throw new Exception("Não foi possível seguir com o apontamento. Quantidade apontada ( "
+                throw new Exception("Não foi possível seguir com o apontamento. Quantidade apontada ("
                                      + qtdApontada + ") é maior que a quantidade disponível ("
                                      + estoqueDisponivel + ") para o produto "
                                       + codprod + " controle " + controle);
