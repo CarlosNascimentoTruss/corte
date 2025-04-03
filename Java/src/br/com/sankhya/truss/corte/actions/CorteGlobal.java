@@ -129,7 +129,7 @@ public class CorteGlobal implements AcaoRotinaJava {
 								
 								iteDAO.delete(new Object[] { nunota, sequencia });
 							} catch (Exception e) {
-								ctx.mostraErro("Erro ao deletar.\n" + e.getMessage());
+								ctx.mostraErro("Erro ao deletar\n" + e.getMessage());
 							}
 						} else {
 							
