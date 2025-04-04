@@ -1,10 +1,5 @@
 package br.com.sankhya.truss.impverba.helper;
 
-import java.math.BigDecimal;
-import java.util.Collection;
-
-import com.sankhya.util.TimeUtils;
-
 import br.com.sankhya.jape.EntityFacade;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.sql.NativeSql;
@@ -14,6 +9,9 @@ import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.truss.impverba.model.ImpVerbaModel;
+
+import java.math.BigDecimal;
+import java.util.Collection;
 
 /* 
  * Rotina que realiza a importação de um csv com um determinado template para a tela controle de verbas.
@@ -41,8 +39,9 @@ public class ImpVerbaHelper {
 		// Loop nos odelos de verba passado como parâmetro
 		for(ImpVerbaModel verba : verbas) {
 			maxNunico = maxNunico.add(BigDecimal.ONE);
-			
-			DynamicVO parVO = parDAO.findOne("CGC_CPF = ?", verba.getCnpjParc());
+
+			String cnpjFormatado = String.format("%14s", verba.getCnpjParc()).replace(' ', '0');
+			DynamicVO parVO = parDAO.findOne("CGC_CPF = ?", cnpjFormatado);
 			DynamicVO natVO = natDAO.findByPK(verba.getCodnat());
 			DynamicVO empVO = empDAO.findByPK(verba.getCodemp());
 			
