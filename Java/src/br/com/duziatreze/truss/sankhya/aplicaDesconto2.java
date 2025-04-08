@@ -103,7 +103,7 @@ public class aplicaDesconto2 implements AcaoRotinaJava {
 			if (rsPerc.next()) {
 
 				if ("8".equals(statusPed)||"9".equals(statusPed)) {
-					ctx.mostraErro("Processo não pode ser realizado, pedido ja faturado ou coletado");
+					ctx.mostraErro("Processo nï¿½o pode ser realizado, pedido ja faturado ou coletado");
 
 				} else {
 

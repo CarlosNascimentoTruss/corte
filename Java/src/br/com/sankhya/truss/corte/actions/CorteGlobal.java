@@ -6,7 +6,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.jdom.Element;
 
@@ -31,7 +30,6 @@ import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.mgecomercial.model.centrais.cac.CACSP;
 import br.com.sankhya.mgecomercial.model.centrais.cac.CACSPHome;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
-import br.com.sankhya.modelcore.comercial.AtributosRegras;
 import br.com.sankhya.modelcore.comercial.CentralItemNota;
 import br.com.sankhya.modelcore.comercial.centrais.CACHelper;
 import br.com.sankhya.modelcore.comercial.impostos.ImpostosHelpper;
