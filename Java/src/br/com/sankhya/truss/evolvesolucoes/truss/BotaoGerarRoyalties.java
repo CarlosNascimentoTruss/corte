@@ -1,4 +1,4 @@
-/*     */ package br.com.evolvesolucoes.truss;
+/*     */ package br.com.sankhya.truss.evolvesolucoes.truss;
 /*     */ 
 /*     */ import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 /*     */ import br.com.sankhya.extensions.actionbutton.ContextoAcao;

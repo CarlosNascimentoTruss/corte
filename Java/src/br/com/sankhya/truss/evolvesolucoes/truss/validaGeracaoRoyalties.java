@@ -1,4 +1,4 @@
-package br.com.evolvesolucoes.truss;
+package br.com.sankhya.truss.evolvesolucoes.truss;
 
 import java.math.BigDecimal;
 import java.util.Collection;
