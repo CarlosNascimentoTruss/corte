@@ -190,6 +190,8 @@ public class CorteExpedicaoOperador {
         try {
             for (DynamicVO iteVO : itesVO) {
                 NativeSql query = new NativeSql(jdbc);
+                query.setNamedParameter("P_CODPROD", iteVO.asBigDecimal("CODPROD"));
+                query.setNamedParameter("P_CODEMP", iteVO.asBigDecimal("CODEMP"));
                 ResultSet r = query.executeQuery("SELECT CODPROD, CONTROLE, DISPONIVEL " +
                         " FROM AD_VW_ESTOQUEPORPARCEIRO EST " +
                         " JOIN AD_TERCCORTEGLOBAL TER ON TER.CODPARC = EST.CODPARC " +
@@ -202,35 +204,23 @@ public class CorteExpedicaoOperador {
 
                 while(r.next()) {
                     BigDecimal disponivel = r.getBigDecimal("DISPONIVEL");
-
+                    String controle = r.getString("CONTROLE");
 
                     if (count == 0) {
                         if (disponivel.compareTo(qtdRestante) >= 0) {
                             break;
                         } else {
                             iteVO.setProperty("QTDNEG", disponivel);
+                            iteVO.setProperty("VLRTOT", disponivel.multiply(iteVO.asBigDecimal("VLRUNIT")));
+                            iteVO.setProperty("CONTROLE", controle);
                             qtdRestante = qtdRestante.subtract(disponivel);
                         }
                     } else {
                         if (disponivel.compareTo(qtdRestante) >= 0) {
-                            iteDAO.create()
-                                    .set("NUNOTA", iteVO.asBigDecimal("NUNOTA"))
-                                    .set("QTDNEG",qtdRestante)
-                                    .set("VLRUNIT",iteVO.asBigDecimal("VLRUNIT"))
-                                    .set("VLRTOT", iteVO.asBigDecimal("VLRUNIT").multiply(qtdRestante))
-                                    .set("CODLOCALORIG", iteVO.asBigDecimal("CODLOCALORIG"))
-                                    .set("CODVOL", iteVO.asString("CODVOL"))
-                                    .save();
+                            insereItem(iteVO, qtdRestante, controle);
                             break;
                         } else {
-                            iteDAO.create()
-                                    .set("NUNOTA", iteVO.asBigDecimal("NUNOTA"))
-                                    .set("QTDNEG",disponivel)
-                                    .set("VLRUNIT",iteVO.asBigDecimal("VLRUNIT"))
-                                    .set("VLRTOT", iteVO.asBigDecimal("VLRUNIT").multiply(disponivel))
-                                    .set("CODLOCALORIG", iteVO.asBigDecimal("CODLOCALORIG"))
-                                    .set("CODVOL", iteVO.asString("CODVOL"))
-                                    .save();
+                            insereItem(iteVO, disponivel, controle);
                             qtdRestante = qtdRestante.subtract(disponivel);
                         }
                     }
@@ -247,6 +237,28 @@ public class CorteExpedicaoOperador {
         }
 
     }
+
+    private static void insereItem (DynamicVO iteVO, BigDecimal quantidade, String controle) throws Exception {
+
+        JapeWrapper iteDAO = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
+        try {
+            iteDAO.create()
+                    .set("NUNOTA", iteVO.asBigDecimal("NUNOTA"))
+                    .set("QTDNEG", quantidade)
+                    .set("CONTROLE", controle)
+                    .set("VLRUNIT", iteVO.asBigDecimal("VLRUNIT"))
+                    .set("VLRTOT", iteVO.asBigDecimal("VLRUNIT").multiply(quantidade))
+                    .set("CODLOCALORIG", iteVO.asBigDecimal("CODLOCALORIG"))
+                    .set("CODVOL", iteVO.asString("CODVOL"))
+                    .save();
+        } catch(Exception e) {
+            throw new Exception("Erro ao incluir itens de lote: " + e.getMessage());
+        }
+
+
+
+    }
+
 
     public static void recalculaNota(BigDecimal nunota) throws Exception {
         JapeWrapper cabDAO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA);
