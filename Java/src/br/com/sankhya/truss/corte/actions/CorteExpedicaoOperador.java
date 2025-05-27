@@ -208,6 +208,7 @@ public class CorteExpedicaoOperador {
 
                     if (count == 0) {
                         if (disponivel.compareTo(qtdRestante) >= 0) {
+                            iteVO.setProperty("CONTROLE", controle);
                             break;
                         } else {
                             iteVO.setProperty("QTDNEG", disponivel);
