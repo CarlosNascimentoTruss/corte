@@ -20,8 +20,6 @@ import com.sankhya.util.TimeUtils;
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;
 import br.com.sankhya.extensions.actionbutton.Registro;
-import br.com.sankhya.jape.wrapper.JapeFactory;
-import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.truss.impverba.helper.ImpVerbaHelper;
 import br.com.sankhya.truss.impverba.model.ImpVerbaModel;
 

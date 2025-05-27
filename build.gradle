@@ -4,7 +4,7 @@ plugins {
 group = 'br.com.sankhya.dstech'
 def versao = readVersion()
 def versaoFinal = "${project.name}-${versao}"
-def skwVersion = "4.30"
+def skwVersion = "4.33"
 
 repositories {
     mavenCentral()
@@ -38,6 +38,8 @@ dependencies {
     implementation 'br.com.sankhya:print-service-base:4.33.82'
     implementation 'net.sf.jasperreports:jasperreports:4.0.1'
     implementation 'br.com.sankhya.mgeprod-module:mgeprod-model:5.1.8'
+    implementation 'br.com.sankhya:hazelcast-all-4.1:master'
+    implementation 'br.com.sankhya.flex.vc.core:RegraNegocio:hotfix-ga-KB-90323-adiantamento'
     //Trabalhar com arquivos xls
     //implementation("org.apache.poi:poi:3.9")
     //implementation("org.apache.poi:poi-ooxml:3.9")
