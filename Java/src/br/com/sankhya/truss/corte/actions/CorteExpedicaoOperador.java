@@ -1,6 +1,7 @@
 package br.com.sankhya.truss.corte.actions;
 
 import br.com.sankhya.jape.EntityFacade;
+import br.com.sankhya.jape.bmp.PersistentLocalEntity;
 import br.com.sankhya.jape.dao.JdbcWrapper;
 import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
@@ -10,6 +11,7 @@ import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.modelcore.auth.AuthenticationInfo;
 import br.com.sankhya.modelcore.comercial.CentralItemNota;
 import br.com.sankhya.modelcore.comercial.centrais.CACHelper;
+import br.com.sankhya.modelcore.comercial.impostos.ImpostosHelpper;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.truss.corte.helper.CorteHelper;
@@ -170,6 +172,7 @@ public class CorteExpedicaoOperador {
             cabDAO.prepareToUpdate(cabVO)
                     .set("AD_DTLIBEXP", TimeUtils.getNow())
                     .update();
+            indicaLotes(nunota);
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception(e.getMessage());
@@ -193,14 +196,49 @@ public class CorteExpedicaoOperador {
                         " WHERE CODPROD = :P_CODPROD " +
                         " AND EST.CODEMP = :P_CODEMP " +
                         " AND TER.SEQUENCIA = 2 " +
-                        " ORDER BY DTVAL DESC ");
+                        " ORDER BY DTVAL ");
+                BigDecimal qtdRestante = iteVO.asBigDecimal("QTDNEG");
+                int count = 0;
 
-                
+                while(r.next()) {
+                    BigDecimal disponivel = r.getBigDecimal("DISPONIVEL");
 
 
+                    if (count == 0) {
+                        if (disponivel.compareTo(qtdRestante) >= 0) {
+                            break;
+                        } else {
+                            iteVO.setProperty("QTDNEG", disponivel);
+                            qtdRestante = qtdRestante.subtract(disponivel);
+                        }
+                    } else {
+                        if (disponivel.compareTo(qtdRestante) >= 0) {
+                            iteDAO.create()
+                                    .set("NUNOTA", iteVO.asBigDecimal("NUNOTA"))
+                                    .set("QTDNEG",qtdRestante)
+                                    .set("VLRUNIT",iteVO.asBigDecimal("VLRUNIT"))
+                                    .set("VLRTOT", iteVO.asBigDecimal("VLRUNIT").multiply(qtdRestante))
+                                    .set("CODLOCALORIG", iteVO.asBigDecimal("CODLOCALORIG"))
+                                    .set("CODVOL", iteVO.asString("CODVOL"))
+                                    .save();
+                            break;
+                        } else {
+                            iteDAO.create()
+                                    .set("NUNOTA", iteVO.asBigDecimal("NUNOTA"))
+                                    .set("QTDNEG",disponivel)
+                                    .set("VLRUNIT",iteVO.asBigDecimal("VLRUNIT"))
+                                    .set("VLRTOT", iteVO.asBigDecimal("VLRUNIT").multiply(disponivel))
+                                    .set("CODLOCALORIG", iteVO.asBigDecimal("CODLOCALORIG"))
+                                    .set("CODVOL", iteVO.asString("CODVOL"))
+                                    .save();
+                            qtdRestante = qtdRestante.subtract(disponivel);
+                        }
+                    }
 
+                    count++;
+                }
             }
-
+            recalculaNota(nunota);
         } catch(Exception e){
             e.printStackTrace();
             throw new Exception("Erro ao indicar Lotes: " + e.getMessage());
@@ -208,6 +246,30 @@ public class CorteExpedicaoOperador {
             jdbc.closeSession();
         }
 
+    }
+
+    public static void recalculaNota(BigDecimal nunota) throws Exception {
+        JapeWrapper cabDAO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA);
+        DynamicVO cabVO = cabDAO.findByPK(nunota);
+
+        EntityFacade dwfEntityFacade = EntityFacadeFactory.getDWFFacade();
+        PersistentLocalEntity persistentEntityCab = dwfEntityFacade.findEntityByPrimaryKey(DynamicEntityNames.CABECALHO_NOTA, new Object[] { nunota});
+
+        ImpostosHelpper imposto = new ImpostosHelpper();
+        imposto.carregarNota(nunota);
+        imposto.calculaICMS(true);
+
+        imposto.totalizarNota(nunota);
+        imposto.setForcarRecalculo(true);
+        imposto.setAtualizaImpostos(true);
+        imposto.setCalcularTudo(true);
+        imposto.calcularImpostos(nunota);
+        imposto.salvarNota();
+
+        BigDecimal totalNota = imposto.calcularTotalNota(cabVO.asBigDecimal("NUNOTA"), imposto.calcularTotalItens(cabVO.asBigDecimal("NUNOTA"), false));
+
+        cabVO.setProperty("VLRNOTA", totalNota);
+        persistentEntityCab.setValueObject((EntityVO)cabVO);
     }
 
 
