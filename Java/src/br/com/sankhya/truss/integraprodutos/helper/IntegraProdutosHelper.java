@@ -404,9 +404,6 @@ public class IntegraProdutosHelper {
 		} finally {
 			closeSession();
 		}
-		
-		
-		
 	}
 	
 	private static void openSession() {
@@ -436,3 +433,9 @@ public class IntegraProdutosHelper {
 		}
 	}
 }
+
+
+
+
+
+

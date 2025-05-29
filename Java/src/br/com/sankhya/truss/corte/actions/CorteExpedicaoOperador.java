@@ -183,21 +183,27 @@ public class CorteExpedicaoOperador {
 
     private static void indicaLotes(BigDecimal nunota) throws Exception {
         JapeWrapper iteDAO = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
+        JapeWrapper cabDAO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA);
         Collection<DynamicVO> itesVO = iteDAO.find("NUNOTA = ?", nunota);
         EntityFacade dwfEntityFacade = EntityFacadeFactory.getDWFFacade();
         JdbcWrapper jdbc = dwfEntityFacade.getJdbcWrapper();
 
+
+
         try {
+
+            cabDAO.prepareToUpdateByPK(nunota)
+                    .set("AD_DESCONSCORTE", "S")
+                    .update();
             for (DynamicVO iteVO : itesVO) {
                 NativeSql query = new NativeSql(jdbc);
                 query.setNamedParameter("P_CODPROD", iteVO.asBigDecimal("CODPROD"));
                 query.setNamedParameter("P_CODEMP", iteVO.asBigDecimal("CODEMP"));
                 ResultSet r = query.executeQuery("SELECT CODPROD, CONTROLE, DISPONIVEL " +
                         " FROM AD_VW_ESTOQUEPORPARCEIRO EST " +
-                        " JOIN AD_TERCCORTEGLOBAL TER ON TER.CODPARC = EST.CODPARC " +
                         " WHERE CODPROD = :P_CODPROD " +
                         " AND EST.CODEMP = :P_CODEMP " +
-                        " AND TER.SEQUENCIA = 2 " +
+                        " AND DISPONIVEL > 0 " +
                         " ORDER BY DTVAL ");
                 BigDecimal qtdRestante = iteVO.asBigDecimal("QTDNEG");
                 int count = 0;
@@ -209,11 +215,13 @@ public class CorteExpedicaoOperador {
                     if (count == 0) {
                         if (disponivel.compareTo(qtdRestante) >= 0) {
                             iteVO.setProperty("CONTROLE", controle);
+                            dwfEntityFacade.saveEntity(DynamicEntityNames.ITEM_NOTA, (EntityVO) iteVO);
                             break;
                         } else {
                             iteVO.setProperty("QTDNEG", disponivel);
                             iteVO.setProperty("VLRTOT", disponivel.multiply(iteVO.asBigDecimal("VLRUNIT")));
                             iteVO.setProperty("CONTROLE", controle);
+                            dwfEntityFacade.saveEntity(DynamicEntityNames.ITEM_NOTA, (EntityVO) iteVO);
                             qtdRestante = qtdRestante.subtract(disponivel);
                         }
                     } else {
@@ -228,6 +236,10 @@ public class CorteExpedicaoOperador {
 
                     count++;
                 }
+
+                cabDAO.prepareToUpdateByPK(nunota)
+                        .set("AD_DESCONSCORTE", "N")
+                        .update();
             }
             recalculaNota(nunota);
         } catch(Exception e){
@@ -237,20 +249,27 @@ public class CorteExpedicaoOperador {
             jdbc.closeSession();
         }
 
+
+
     }
 
     private static void insereItem (DynamicVO iteVO, BigDecimal quantidade, String controle) throws Exception {
 
         JapeWrapper iteDAO = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
         try {
+
             iteDAO.create()
                     .set("NUNOTA", iteVO.asBigDecimal("NUNOTA"))
+                    .set("CODPROD", iteVO.asBigDecimal("CODPROD"))
                     .set("QTDNEG", quantidade)
                     .set("CONTROLE", controle)
                     .set("VLRUNIT", iteVO.asBigDecimal("VLRUNIT"))
                     .set("VLRTOT", iteVO.asBigDecimal("VLRUNIT").multiply(quantidade))
                     .set("CODLOCALORIG", iteVO.asBigDecimal("CODLOCALORIG"))
                     .set("CODVOL", iteVO.asString("CODVOL"))
+                    .set("ATUALESTOQUE", iteVO.asBigDecimal("ATUALESTOQUE"))
+                    .set("RESERVA", iteVO.asString("RESERVA"))
+                    .set("NUTAB", iteVO.asBigDecimal("NUTAB"))
                     .save();
         } catch(Exception e) {
             throw new Exception("Erro ao incluir itens de lote: " + e.getMessage());
