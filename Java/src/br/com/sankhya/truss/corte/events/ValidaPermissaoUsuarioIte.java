@@ -45,7 +45,7 @@ public class ValidaPermissaoUsuarioIte implements EventoProgramavelJava {
 			
 			boolean confirmando = JapeSession.getProperty(AtributosRegras.CONFIRMANDO) != null;
 			
-			String corte = corteHelper.validaTopCorte(cabVO.asBigDecimal("CODTIPOPER"), jdbc);
+			String corte = corteHelper.validaTopCorte(cabVO.asBigDecimal("CODTIPOPER"));
 			if("N".equals(corte) || confirmando) {
 				return;
 			}

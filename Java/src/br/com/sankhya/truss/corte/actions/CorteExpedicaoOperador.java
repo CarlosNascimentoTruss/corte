@@ -15,7 +15,6 @@ import br.com.sankhya.modelcore.comercial.impostos.ImpostosHelpper;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
 import br.com.sankhya.truss.corte.helper.CorteHelper;
-import br.com.sankhya.truss.corte.scheduled.CorteLocal;
 import br.com.sankhya.ws.ServiceContext;
 import com.sankhya.util.TimeUtils;
 
@@ -33,7 +32,6 @@ public class CorteExpedicaoOperador {
             JapeWrapper iteDAO = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
             JapeWrapper cabDAO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA);
             JapeWrapper proDAO = JapeFactory.dao(DynamicEntityNames.PRODUTO);
-            JapeWrapper parDAO = JapeFactory.dao(DynamicEntityNames.PARCEIRO);
             EntityFacade dwfEntityFacade = EntityFacadeFactory.getDWFFacade();
             JdbcWrapper jdbc = dwfEntityFacade.getJdbcWrapper();
 
@@ -63,7 +61,7 @@ public class CorteExpedicaoOperador {
                 query.setNamedParameter("P_CODLOCAL", codlocal);
 
 
-                ResultSet r = query.executeQuery("SELECT DISPONIVEL FROM AD_VW_ESTOQUEGLOBALOPERADOR WHERE CODPROD = :P_CODPROD AND CODLOCAL = :P_CODLOCAL");
+                ResultSet r = query.executeQuery("SELECT NVL(SUM(DISPONIVEL),0) AS DISPONIVEL FROM AD_VW_ESTOQUEPORPARCEIRO WHERE CODPROD = :P_CODPROD AND CODLOCAL = :P_CODLOCAL");
 
                 if (r.next()) {
                     disponivel = r.getBigDecimal("DISPONIVEL");
@@ -74,7 +72,7 @@ public class CorteExpedicaoOperador {
                     DynamicVO proVO = proDAO.findByPK(codprod);
                     qtdMinVenda = proVO.asBigDecimal("AD_QTDMINVENDA");
                     if (qtdMinVenda == null) {
-                        throw new Exception("Produto " + codprod + " - " + proVO.asString("DESCRPROD") + " não possui cadastro de quantidade mínima para venda.\nRealize o cadastro.");
+                        throw new Exception("Produto " + codprod + " - " + proVO.asString("DESCRPROD") + " npossui cadastro de quantidade mpara venda.\nRealize o cadastro.");
                     }
 
                     BigDecimal newQtdNeg = disponivel.subtract(disponivel.remainder(qtdMinVenda));
@@ -155,24 +153,14 @@ public class CorteExpedicaoOperador {
 
                 cabDAO.deleteByCriteria("NUNOTA = ?", nunota);
             } else {
+                indicaLotes(nunota);
+                cabDAO.prepareToUpdate(cabVO)
+                        .set("AD_DTLIBEXP", TimeUtils.getNow())
+                        .set("AD_STATUSPED", "28")
+                        .update();
 
-                CorteLocal corte = new CorteLocal();
-                String statusPed = corte.executaCorteLocal(nunota);
-
-                if (statusPed.equals("-1")) {
-                    throw new Exception("Erro ao executar Corte Local");
-                } else {
-                    cabDAO.prepareToUpdate(cabVO)
-                            .set("AD_STATUSPED", statusPed)
-                            .update();
-
-                }
             }
 
-            cabDAO.prepareToUpdate(cabVO)
-                    .set("AD_DTLIBEXP", TimeUtils.getNow())
-                    .update();
-            indicaLotes(nunota);
         } catch (Exception e) {
             e.printStackTrace();
             throw new Exception(e.getMessage());
@@ -199,10 +187,11 @@ public class CorteExpedicaoOperador {
                 NativeSql query = new NativeSql(jdbc);
                 query.setNamedParameter("P_CODPROD", iteVO.asBigDecimal("CODPROD"));
                 query.setNamedParameter("P_CODEMP", iteVO.asBigDecimal("CODEMP"));
-                ResultSet r = query.executeQuery("SELECT CODPROD, CONTROLE, DISPONIVEL " +
+                query.setNamedParameter("P_CODLOCAL", iteVO.asBigDecimal("CODLOCALORIG"));
+                ResultSet r = query.executeQuery("SELECT CODPROD, CONTROLE, NVL(DISPONIVEL,0) AS DISPONIVEL " +
                         " FROM AD_VW_ESTOQUEPORPARCEIRO EST " +
                         " WHERE CODPROD = :P_CODPROD " +
-                        " AND EST.CODEMP = :P_CODEMP " +
+                        " AND EST.CODLOCAL = :P_CODLOCAL " +
                         " AND DISPONIVEL > 0 " +
                         " ORDER BY DTVAL ");
                 BigDecimal qtdRestante = iteVO.asBigDecimal("QTDNEG");

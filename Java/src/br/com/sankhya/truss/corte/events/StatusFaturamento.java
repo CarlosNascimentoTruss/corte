@@ -80,7 +80,7 @@ public class StatusFaturamento implements EventoProgramavelJava {
 			BigDecimal sequenciaorig = newVO.asBigDecimal("SEQUENCIAORIG");
 			BigDecimal nunota = newVO.asBigDecimal("NUNOTA");
 			
-			String corte = corteHelper.validaTopCorte(cabDAO.findByPK(nunotaorig).asBigDecimal("CODTIPOPER"), jdbc);
+			String corte = corteHelper.validaTopCorte(cabDAO.findByPK(nunotaorig).asBigDecimal("CODTIPOPER"));
 			
 			String tipmovorig = cabDAO.findByPK(nunotaorig).asString("TIPMOV");
 			String tipmovdest = cabDAO.findByPK(nunota).asString("TIPMOV");

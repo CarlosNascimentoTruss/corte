@@ -96,9 +96,9 @@ public class CorteLocalOperador {
                     } catch (Exception e) {
                         deuErro = true;
                         if(nunotaParam == null) {
-                            escreveLog("Erro ao realizar consulta de estoque local disponível: \n" + e.getMessage());
+                            escreveLog("Erro ao realizar consulta de estoque local dispon\n" + e.getMessage());
                         } else {
-                            throw new Exception("Erro ao realizar consulta de estoque local disponível: \n" + e.getMessage());
+                            throw new Exception("Erro ao realizar consulta de estoque local dispon\n" + e.getMessage());
                         }
 
                     }
@@ -114,7 +114,7 @@ public class CorteLocalOperador {
                         qtdMinVenda = proVO.asBigDecimal("AD_QTDMINVENDA");
                         if(qtdMinVenda == null) {
                             deuErro = true;
-                            escreveLog("Produto " + codprod + " - " + proVO.asString("DESCRPROD") + " não possui cadastro de quantidade mínima para venda.\nRealize o cadastro.");
+                            escreveLog("Produto " + codprod + " - " + proVO.asString("DESCRPROD") + " npossui cadastro de quantidade mpara venda.\nRealize o cadastro.");
                         }
 
                         BigDecimal newQtdNeg = disponivel.subtract(disponivel.remainder(qtdMinVenda));
@@ -166,9 +166,9 @@ public class CorteLocalOperador {
                     }
                 } catch (Exception e) {
                     if(nunotaParam == null) {
-                        escreveLog("Erro ao atualizar dados do cabeçalho \n" + e.getMessage());
+                        escreveLog("Erro ao atualizar dados do cabe\n" + e.getMessage());
                     } else {
-                        throw new Exception("Erro ao atualizar dados do cabeçalho \n" + e.getMessage());
+                        throw new Exception("Erro ao atualizar dados do cabe\n" + e.getMessage());
                     }
                 }
             }
@@ -177,7 +177,7 @@ public class CorteLocalOperador {
 
         } catch(Exception e) {
             e.printStackTrace();
-            escreveLog("Erro na ação agendada: \n" + e.getMessage());
+            escreveLog("Erro na aagendada: \n" + e.getMessage());
         } finally {
             closeSession();
         }

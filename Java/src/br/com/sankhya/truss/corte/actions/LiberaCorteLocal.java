@@ -10,14 +10,14 @@ public class LiberaCorteLocal implements AcaoRotinaJava {
 	public void doAction(ContextoAcao ctx) throws Exception {
 		// TODO Auto-generated method stub
 		try {
-		Registro[] linhas = ctx.getLinhas();
-		
-		for(Registro linha : linhas) {
-			linha.setCampo("AD_BLOQCORTELOCAL", "N");
-		}
-		
-		ctx.setMensagemRetorno("Pedido(s) liberado(s) para corte local. Aguarde a execução da ação agendada.");
-		
+			Registro[] linhas = ctx.getLinhas();
+
+			for(Registro linha : linhas) {
+				linha.setCampo("AD_BLOQCORTELOCAL", "N");
+			}
+
+			ctx.setMensagemRetorno("Pedido(s) liberado(s) para corte local. Aguarde a execuda aagendada.");
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			ctx.mostraErro(e.getMessage());

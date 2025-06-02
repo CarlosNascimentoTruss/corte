@@ -43,7 +43,7 @@ public class CorteGlobal implements AcaoRotinaJava {
 	private static SessionHandle hnd = null;
 	private static JdbcWrapper jdbc	= null;
 	private static Boolean isOpen = Boolean.FALSE;
-	
+
 	@Override
 	public void doAction(ContextoAcao ctx) throws Exception {
 		// TODO Auto-generated method stub
@@ -52,18 +52,18 @@ public class CorteGlobal implements AcaoRotinaJava {
 		JapeWrapper parDAO = JapeFactory.dao(DynamicEntityNames.PARCEIRO);
 
 
-		
+
 		try {
-			
+
 			Registro[] linhas = ctx.getLinhas();
-			
+
 			JapeSessionContext.putProperty("br.com.sankhya.com.CentralCompraVenda", Boolean.TRUE);
 			JapeSessionContext.putProperty("ItemNota.incluindo.alterando.pela.central", Boolean.TRUE);
-			
-			
+
+
 			for(Registro linha : linhas) {
 				BigDecimal nunota = (BigDecimal) linha.getCampo("NUNOTA");
-				
+
 				DynamicVO cabVO = cabDAO.findByPK(nunota);
 				DynamicVO parVO = parDAO.findByPK(cabVO.asBigDecimal("CODPARC"));
 
@@ -75,14 +75,14 @@ public class CorteGlobal implements AcaoRotinaJava {
 					CorteExpedicaoOperador.executaCorte(nunota);
 				}
 			}
-			
+
 			ctx.setMensagemRetorno("Corte Executado com Sucesso.");
 		} catch(Exception e) {
 			e.printStackTrace();
-			throw new Exception("Erro ao executar a ação. " + e.getMessage());
+			throw new Exception("Erro ao executar a a" + e.getMessage());
 		}
 	}
-	
 
-	
+
+
 }

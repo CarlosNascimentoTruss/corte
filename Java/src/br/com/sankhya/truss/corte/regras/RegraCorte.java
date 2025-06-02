@@ -45,7 +45,7 @@ public class RegraCorte implements Regra {
 				if (statusNota.equals("L")) {
 					
 					
-					String corte = corteHelper.validaTopCorte(newVO.asBigDecimal("CODTIPOPER"), jdbc);
+					String corte = corteHelper.validaTopCorte(newVO.asBigDecimal("CODTIPOPER"));
 					if("N".equals(corte)) {
 						return;
 					}
