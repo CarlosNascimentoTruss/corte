@@ -1,4 +1,4 @@
-package br.com.sankhya.truss.tempDePara;
+package br.com.sankhya.truss.tempDePara.eventos;
 
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
@@ -33,13 +33,22 @@ public class DePara implements EventoProgramavelJava {
         Timestamp finVigenciaNew = null;
         String motivoNew = null;
 
-        if(quando.equals("DELETE") || quando.equals("UPDATE")){
+        if(quando.equals("UPDATE")){
             DynamicVO oldVO = (DynamicVO) event.getOldVO();
             deOld = oldVO.asBigDecimal("DE");
             paraOld = oldVO.asBigDecimal("PARA");
             iniVigenciaOld = oldVO.asTimestamp("INIVIGENCIA");
             finVigenciaOld = oldVO.asTimestamp("FINVIGENCIA");
             motivoOld = oldVO.asString("MOTIVO");
+        }
+
+        if(quando.equals("DELETE")){
+            DynamicVO vo = (DynamicVO) event.getVo();
+            deOld = vo.asBigDecimal("DE");
+            paraOld = vo.asBigDecimal("PARA");
+            iniVigenciaOld = vo.asTimestamp("INIVIGENCIA");
+            finVigenciaOld = vo.asTimestamp("FINVIGENCIA");
+            motivoOld = vo.asString("MOTIVO");
         }
 
         if(quando.equals("INSERT") || quando.equals("UPDATE")){
@@ -94,15 +103,16 @@ public class DePara implements EventoProgramavelJava {
         BigDecimal para = voNew.asBigDecimal("PARA");
         Timestamp iniVigencia = voNew.asTimestamp("INIVIGENCIA");
         Timestamp finVigencia = voNew.asTimestamp("FINVIGENCIA");
+        BigDecimal seq = voNew.asBigDecimal("SEQ");
 
         validaProdutosRepetidos(de, para);
         validaDataInicialVersusFinal(iniVigencia, finVigencia, de, para);
-        validaDatasConflitantes(iniVigencia, finVigencia, de, para);
+        validaDatasConflitantes(iniVigencia, finVigencia, de, para, seq);
 
     }
 
-    private void validaDatasConflitantes(Timestamp iniVigencia, Timestamp finVigencia, BigDecimal de, BigDecimal para) throws Exception {
-        Collection<DynamicVO> collection = JapeFactory.dao("AD_DEPARAPROD").find(" DE = ? AND PARA = ?", de, para);
+    private void validaDatasConflitantes(Timestamp iniVigencia, Timestamp finVigencia, BigDecimal de, BigDecimal para, BigDecimal seq) throws Exception {
+        Collection<DynamicVO> collection = JapeFactory.dao("AD_DEPARAPROD").find(" DE = ? AND PARA = ? AND SEQ <> ?", de, para, seq);
         for (DynamicVO vo : collection) {
             Timestamp iniVigenciaDaBusca = vo.asTimestamp("INIVIGENCIA");
             Timestamp finVigenciaDaBusca = vo.asTimestamp("FINVIGENCIA");
@@ -113,6 +123,10 @@ public class DePara implements EventoProgramavelJava {
 
             if (finVigencia.compareTo(iniVigenciaDaBusca) >= 0 && finVigencia.compareTo(finVigenciaDaBusca) <= 0) {
                 throw new MGEModelException("Final da vigência está em conflito com outro registro: " + de + " = " + para);
+            }
+
+            if (iniVigencia.compareTo(iniVigenciaDaBusca) <= 0 && finVigencia.compareTo(finVigenciaDaBusca) >= 0) {
+                throw new MGEModelException("Vigência está em conflito com outro registro: " + de + " = " + para);
             }
         }
     }

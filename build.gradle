@@ -78,9 +78,9 @@ tasks.clean {
     println("dist removido")
 }
 
-tasks.register('DePara - evento - Valida Registro', Jar) {
+tasks.register('DePara', Jar) {
     group = "export"
-    archiveBaseName.set("evento-${versaoFinal}")
+    archiveBaseName.set("custom-dePara-${versaoFinal}")
     destinationDirectory.set(file("dist"))
     include 'br/com/sankhya/truss/tempDePara/**'
     from {
