@@ -33,7 +33,7 @@ public class DePara implements EventoProgramavelJava {
         Timestamp finVigenciaNew = null;
         String motivoNew = null;
 
-        if(quando.equals("UPDATE")){
+        if (quando.equals("UPDATE")) {
             DynamicVO oldVO = (DynamicVO) event.getOldVO();
             deOld = oldVO.asBigDecimal("DE");
             paraOld = oldVO.asBigDecimal("PARA");
@@ -42,7 +42,7 @@ public class DePara implements EventoProgramavelJava {
             motivoOld = oldVO.asString("MOTIVO");
         }
 
-        if(quando.equals("DELETE")){
+        if (quando.equals("DELETE")) {
             DynamicVO vo = (DynamicVO) event.getVo();
             deOld = vo.asBigDecimal("DE");
             paraOld = vo.asBigDecimal("PARA");
@@ -51,7 +51,7 @@ public class DePara implements EventoProgramavelJava {
             motivoOld = vo.asString("MOTIVO");
         }
 
-        if(quando.equals("INSERT") || quando.equals("UPDATE")){
+        if (quando.equals("INSERT") || quando.equals("UPDATE")) {
             DynamicVO newVO = (DynamicVO) event.getVo();
             deNew = newVO.asBigDecimal("DE");
             paraNew = newVO.asBigDecimal("PARA");
@@ -82,14 +82,14 @@ public class DePara implements EventoProgramavelJava {
     }
 
     private BigDecimal getUsuarioLogado() {
-        return((AuthenticationInfo) ServiceContext.getCurrent().getAutentication()).getUserID();
+        return ((AuthenticationInfo) ServiceContext.getCurrent().getAutentication()).getUserID();
     }
 
     private BigDecimal getSeqLog() throws Exception {
         Collection<DynamicVO> collection = JapeFactory.dao("AD_DEPARAPRODLOG").find(" SEQLOG = (SELECT MAX(SEQLOG) FROM AD_DEPARAPRODLOG)");
-        if(collection.isEmpty()){
+        if (collection.isEmpty()) {
             return BigDecimal.ONE;
-        }else{
+        } else {
             DynamicVO logVO = collection.iterator().next();
             BigDecimal lastSeqLog = logVO.asBigDecimal("SEQLOG");
             return lastSeqLog.add(BigDecimal.ONE);
@@ -106,9 +106,21 @@ public class DePara implements EventoProgramavelJava {
         BigDecimal seq = voNew.asBigDecimal("SEQ");
 
         validaProdutosRepetidos(de, para);
+        validaProdutosEspelhados(de, para, iniVigencia, finVigencia);
         validaDataInicialVersusFinal(iniVigencia, finVigencia, de, para);
         validaDatasConflitantes(iniVigencia, finVigencia, de, para, seq);
 
+    }
+
+    private void validaProdutosEspelhados(BigDecimal de, BigDecimal para, Timestamp iniVigencia, Timestamp finVigencia) {
+        try {
+            Collection<DynamicVO> collection = JapeFactory.dao("AD_DEPARAPROD").find(" DE = ? AND PARA = ? AND INIVIGENCIA = ? AND FINVIGENCIA = ?", para, de, iniVigencia, finVigencia);
+            if (!collection.isEmpty()) {
+                throw new MGEModelException("Produto esperalhado nesta data de vigencia: " + de + " = " + para);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void validaDatasConflitantes(Timestamp iniVigencia, Timestamp finVigencia, BigDecimal de, BigDecimal para, BigDecimal seq) throws Exception {
@@ -146,18 +158,18 @@ public class DePara implements EventoProgramavelJava {
     @Override
     public void beforeInsert(PersistenceEvent event) throws Exception {
         validaRegistro(event);
-        registraLog(event,"INSERT");
+        registraLog(event, "INSERT");
     }
 
     @Override
     public void beforeUpdate(PersistenceEvent event) throws Exception {
         validaRegistro(event);
-        registraLog(event,"UPDATE");
+        registraLog(event, "UPDATE");
     }
 
     @Override
     public void beforeDelete(PersistenceEvent event) throws Exception {
-        registraLog(event,"DELETE");
+        registraLog(event, "DELETE");
     }
 
     @Override
