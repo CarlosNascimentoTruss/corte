@@ -10,9 +10,11 @@ import br.com.sankhya.jape.sql.NativeSql;
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
+import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
+import br.com.sankhya.truss.util.Duplicate;
 import com.sankhya.util.JdbcUtils;
 
 import java.math.BigDecimal;
@@ -39,7 +41,8 @@ public class Substituicao implements AcaoRotinaJava {
             return;
         }
         BigDecimal nunota = (BigDecimal) linha.getCampo("NUNOTA");
-        Timestamp dtneg = (Timestamp) linha.getCampo("DTNEG");
+        Timestamp dtEntSai = (Timestamp) linha.getCampo("DTENTSAI");
+        BigDecimal codUsuLogado = ctx.getUsuarioLogado();
 
         String localSep = getLocalSep(codparc);
         if (localSep == null) {
@@ -55,38 +58,78 @@ public class Substituicao implements AcaoRotinaJava {
             BigDecimal multiploDE = getMultiplo(codprodDE);
             BigDecimal qtdAtendidaDE = getQtdAtendida(codprodDE, codlocal, multiploDE, localSep, qtdneg);
 
-
-            if(qtdAtendidaDE.compareTo(BigDecimal.ZERO) == 0){
-                BigDecimal codprodPARA = getCodProdPARA(codprodDE, dtneg);
-                if(codprodPARA.compareTo(BigDecimal.ZERO) > 0) {
+            if (qtdAtendidaDE.compareTo(BigDecimal.ZERO) == 0) {
+                BigDecimal codprodPARA = getCodProdPARA(codprodDE, dtEntSai);
+                if (codprodPARA.compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal multiploPARA = getMultiplo(codprodPARA);
                     BigDecimal qtdAtendidaPARA = getQtdAtendida(codprodPARA, codlocal, multiploPARA, localSep, qtdneg);
-                    if(qtdAtendidaPARA.compareTo(qtdneg) == 0){
-                        daoItem.prepareToUpdate(itemVO).set("CODPROD",codprodPARA).update();
-                        //System.out.println(qtdneg + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
+                    if (qtdAtendidaPARA.compareTo(qtdneg) == 0) {
+                        daoItem.prepareToUpdate(itemVO).set("CODPROD", codprodPARA).update();
+                        registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"TOTAL: " + qtdneg + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
                     } else if (qtdAtendidaPARA.compareTo(qtdneg) < 0 && qtdAtendidaPARA.compareTo(BigDecimal.ZERO) > 0) {
-                        //incluirItem(itemVO,codprodPARA, qtdAtendidaPARA);
+                        duplicarItem(itemVO, codprodPARA, qtdAtendidaPARA);
                         BigDecimal corte = qtdneg.subtract(qtdAtendidaPARA);
-                        daoItem.prepareToUpdate(itemVO).set("QTDNEG",corte).update();
+                        daoItem.prepareToUpdate(itemVO).set("QTDNEG", corte).update();
+                        registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"PARCIAL: " + qtdAtendidaPARA + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
                     }
                 }
             }
 
-            if(qtdAtendidaDE.compareTo(BigDecimal.ZERO) > 0 && qtdAtendidaDE.compareTo(qtdneg) < 0){
-                BigDecimal codprodPARA = getCodProdPARA(codprodDE, dtneg);
-                if(codprodPARA.compareTo(BigDecimal.ZERO) > 0) {
+            if (qtdAtendidaDE.compareTo(BigDecimal.ZERO) > 0 && qtdAtendidaDE.compareTo(qtdneg) < 0) {
+                BigDecimal codprodPARA = getCodProdPARA(codprodDE, dtEntSai);
+                if (codprodPARA.compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal multiploPARA = getMultiplo(codprodPARA);
                     BigDecimal qtdParaRestante = qtdneg.subtract(qtdAtendidaDE);
                     BigDecimal qtdAtendidaPARA = getQtdAtendida(codprodPARA, codlocal, multiploPARA, localSep, qtdParaRestante);
                     if (qtdAtendidaPARA.compareTo(qtdParaRestante) <= 0) {
-                        //incluirItem(itemVO,codprodPARA, qtdAtendidaPARA);
+                        duplicarItem(itemVO, codprodPARA, qtdAtendidaPARA);
                         BigDecimal corte = qtdneg.subtract(qtdAtendidaPARA);
-                        daoItem.prepareToUpdate(itemVO).set("QTDNEG",corte).update();
+                        daoItem.prepareToUpdate(itemVO).set("QTDNEG", corte).update();
+                        registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"PARCIAL: " + qtdAtendidaPARA + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
                     }
                 }
             }
+        }
+    }
 
+    private void registraAlteracaoLOG(BigDecimal codprodDE, BigDecimal codUsuLogado, Timestamp dtEntSai, BigDecimal nunota, String msg) throws Exception {
+        JapeWrapper daoDeParaExec = JapeFactory.dao("AD_DEPARAPRODEXEC");
+        FluidCreateVO fluid = daoDeParaExec.create();
+        fluid.set("SEQ",getSeqExec(daoDeParaExec));
+        fluid.set("NUNOTA",nunota);
+        fluid.set("CODPRODORIGINAL",codprodDE);
+        fluid.set("CODUSU",codUsuLogado);
+        fluid.set("DHEXEC",new Timestamp(System.currentTimeMillis()));
+        fluid.set("DHENTSAI",dtEntSai);
+        fluid.set("REGRAAPLICADA",msg.toCharArray());
+        fluid.save();
+    }
 
+    private BigDecimal getSeqExec(JapeWrapper daoDeParaExec) {
+        BigDecimal nextSeq = BigDecimal.ONE;
+        try {
+            Collection<DynamicVO> collection = daoDeParaExec.find(" SEQ = (SELECT MAX(SEQ) FROM AD_DEPARAPRODEXEC)");
+            if(collection.isEmpty()){
+                return nextSeq;
+            }else{
+                DynamicVO vo = collection.iterator().next();
+                BigDecimal lastSeq = vo.asBigDecimal("SEQ");
+                return lastSeq.add(BigDecimal.ONE);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void duplicarItem(DynamicVO itemVO, BigDecimal codprodPARA, BigDecimal qtdAtendidaPARA) {
+        JapeWrapper daoItem = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
+        try {
+            FluidCreateVO newItem = Duplicate.duplicate(daoItem, itemVO);
+            newItem.set("CODPROD", codprodPARA);
+            newItem.set("QTDNEG", qtdAtendidaPARA);
+            newItem.save();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -113,11 +156,11 @@ public class Substituicao implements AcaoRotinaJava {
         return multiplo;
     }
 
-    private BigDecimal getCodProdPARA(BigDecimal codprod, Timestamp dtneg) {
+    private BigDecimal getCodProdPARA(BigDecimal codprod, Timestamp dtEntSai) {
         BigDecimal para = BigDecimal.ZERO;
         JapeWrapper deParaProdDAO = JapeFactory.dao("AD_DEPARAPROD");
         try {
-            Collection<DynamicVO> collection = deParaProdDAO.find(" DE = ? AND ? BETWEEN INIVIGENCIA AND FINVIGENCIA");
+            Collection<DynamicVO> collection = deParaProdDAO.find(" DE = ? AND ? BETWEEN INIVIGENCIA AND FINVIGENCIA", codprod, dtEntSai);
             if (!collection.isEmpty()) {
                 DynamicVO deParaVO = collection.iterator().next();
                 para = deParaVO.asBigDecimal("PARA");
