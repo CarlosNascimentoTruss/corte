@@ -83,6 +83,7 @@ tasks.register('DePara', Jar) {
     archiveBaseName.set("custom-dePara-${versaoFinal}")
     destinationDirectory.set(file("dist"))
     include 'br/com/sankhya/truss/tempDePara/**'
+    include 'br/com/sankhya/truss/util/Duplicate.class'
     from {
         sourceSets.main.output
     }

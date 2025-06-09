@@ -11,6 +11,7 @@ import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.wrapper.JapeFactory;
 import br.com.sankhya.jape.wrapper.JapeWrapper;
 import br.com.sankhya.jape.wrapper.fluid.FluidCreateVO;
+import br.com.sankhya.jape.wrapper.fluid.FluidUpdateVO;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
@@ -52,12 +53,12 @@ public class Substituicao implements AcaoRotinaJava {
         JapeWrapper daoItem = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
         Collection<DynamicVO> collectionItensNota = daoItem.find(" NUNOTA = ?", nunota);
         for (DynamicVO itemVO : collectionItensNota) {
+            BigDecimal sequencia = itemVO.asBigDecimal("SEQUENCIA");
             BigDecimal codprodDE = itemVO.asBigDecimal("CODPROD");
             BigDecimal qtdneg = itemVO.asBigDecimal("QTDNEG");
             BigDecimal codlocal = itemVO.asBigDecimal("CODLOCALORIG");
             BigDecimal multiploDE = getMultiplo(codprodDE);
             BigDecimal qtdAtendidaDE = getQtdAtendida(codprodDE, codlocal, multiploDE, localSep, qtdneg);
-
             if (qtdAtendidaDE.compareTo(BigDecimal.ZERO) == 0) {
                 BigDecimal codprodPARA = getCodProdPARA(codprodDE, dtEntSai);
                 if (codprodPARA.compareTo(BigDecimal.ZERO) > 0) {
@@ -65,11 +66,13 @@ public class Substituicao implements AcaoRotinaJava {
                     BigDecimal qtdAtendidaPARA = getQtdAtendida(codprodPARA, codlocal, multiploPARA, localSep, qtdneg);
                     if (qtdAtendidaPARA.compareTo(qtdneg) == 0) {
                         daoItem.prepareToUpdate(itemVO).set("CODPROD", codprodPARA).update();
+                        atualizaTotais(nunota, sequencia);
                         registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"TOTAL: " + qtdneg + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
                     } else if (qtdAtendidaPARA.compareTo(qtdneg) < 0 && qtdAtendidaPARA.compareTo(BigDecimal.ZERO) > 0) {
                         duplicarItem(itemVO, codprodPARA, qtdAtendidaPARA);
                         BigDecimal corte = qtdneg.subtract(qtdAtendidaPARA);
                         daoItem.prepareToUpdate(itemVO).set("QTDNEG", corte).update();
+                        atualizaTotais(nunota, sequencia);
                         registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"PARCIAL: " + qtdAtendidaPARA + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
                     }
                 }
@@ -90,6 +93,7 @@ public class Substituicao implements AcaoRotinaJava {
                 }
             }
         }
+        ctx.setMensagemRetorno("DePara Executado com sucesso!");
     }
 
     private void registraAlteracaoLOG(BigDecimal codprodDE, BigDecimal codUsuLogado, Timestamp dtEntSai, BigDecimal nunota, String msg) throws Exception {
@@ -101,7 +105,7 @@ public class Substituicao implements AcaoRotinaJava {
         fluid.set("CODUSU",codUsuLogado);
         fluid.set("DHEXEC",new Timestamp(System.currentTimeMillis()));
         fluid.set("DHENTSAI",dtEntSai);
-        fluid.set("REGRAAPLICADA",msg.toCharArray());
+        fluid.set("REGRAAPLICADA",msg);
         fluid.save();
     }
 
@@ -122,15 +126,54 @@ public class Substituicao implements AcaoRotinaJava {
     }
 
     private void duplicarItem(DynamicVO itemVO, BigDecimal codprodPARA, BigDecimal qtdAtendidaPARA) {
+        BigDecimal nunota = itemVO.asBigDecimal("NUNOTA");
         JapeWrapper daoItem = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
         try {
             FluidCreateVO newItem = Duplicate.duplicate(daoItem, itemVO);
+            BigDecimal nextSeqItem = getSeqItem(nunota);
+            newItem.set("SEQUENCIA", nextSeqItem);
             newItem.set("CODPROD", codprodPARA);
             newItem.set("QTDNEG", qtdAtendidaPARA);
             newItem.save();
+
+            atualizaTotais(nunota, nextSeqItem);
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void atualizaTotais(BigDecimal nunota, BigDecimal nextSeqItem) {
+        JapeWrapper dao = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
+        try {
+            DynamicVO vo = dao.findByPK(nunota, nextSeqItem);
+            BigDecimal qtdneg = vo.asBigDecimal("QTDNEG");
+            BigDecimal vlrunit = vo.asBigDecimal("VLRUNIT");
+            FluidUpdateVO update = dao.prepareToUpdateByPK(nunota, nextSeqItem);
+            BigDecimal total = qtdneg.multiply(vlrunit);
+            update.set("VLRTOT",total);
+            update.set("BASEICMS", total);
+            update.set("BASEIPI", total);
+            update.update();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private BigDecimal getSeqItem(BigDecimal nunota) {
+        BigDecimal seq = BigDecimal.ONE;
+        try {
+            JapeWrapper daoItem = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
+            Collection<DynamicVO> collection = daoItem.find(" NUNOTA = ? AND SEQUENCIA = (SELECT MAX(SEQUENCIA) FROM TGFITE WHERE NUNOTA = ?)", nunota, nunota);
+            if(!collection.isEmpty()){
+                DynamicVO itemVO = collection.iterator().next();
+                BigDecimal sequenciaMax = itemVO.asBigDecimal("SEQUENCIA");
+                return sequenciaMax.add(BigDecimal.ONE);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return seq;
     }
 
     private String getLocalSep(BigDecimal codparc) {
