@@ -1,4 +1,4 @@
-package br.com.sankhya.truss.tempDePara.bto;
+package br.com.sankhya.truss.corte.depara.actions;
 
 import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
 import br.com.sankhya.extensions.actionbutton.ContextoAcao;

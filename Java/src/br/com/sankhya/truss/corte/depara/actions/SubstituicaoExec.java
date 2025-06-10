@@ -1,8 +1,5 @@
-package br.com.sankhya.truss.tempDePara.bto;
+package br.com.sankhya.truss.corte.depara.actions;
 
-import br.com.sankhya.extensions.actionbutton.AcaoRotinaJava;
-import br.com.sankhya.extensions.actionbutton.ContextoAcao;
-import br.com.sankhya.extensions.actionbutton.Registro;
 import br.com.sankhya.jape.EntityFacade;
 import br.com.sankhya.jape.core.JapeSession;
 import br.com.sankhya.jape.dao.JdbcWrapper;
@@ -15,7 +12,7 @@ import br.com.sankhya.jape.wrapper.fluid.FluidUpdateVO;
 import br.com.sankhya.modelcore.MGEModelException;
 import br.com.sankhya.modelcore.util.DynamicEntityNames;
 import br.com.sankhya.modelcore.util.EntityFacadeFactory;
-import br.com.sankhya.truss.util.Duplicate;
+import br.com.sankhya.truss.corte.depara.util.Duplicate;
 import com.sankhya.util.JdbcUtils;
 
 import java.math.BigDecimal;
@@ -23,32 +20,21 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Collection;
 
-public class Substituicao implements AcaoRotinaJava {
-    @Override
-    public void doAction(ContextoAcao ctx) throws Exception {
-        Registro[] linhas = ctx.getLinhas();
-        if (linhas.length != 1) {
-            ctx.mostraErro("Selecione 1 registro.");
-        }
-        Registro linha = linhas[0];
-        BigDecimal codtipoper = (BigDecimal) linha.getCampo("CODTIPOPER");
+public class SubstituicaoExec {
+
+    public void acao(BigDecimal nunota, BigDecimal codUsuLogado) throws Exception {
+        DynamicVO cabVO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA).findByPK(nunota);
+        BigDecimal codtipoper = cabVO.asBigDecimal("CODTIPOPER");
         if (codtipoper.compareTo(new BigDecimal("3187")) == 0) {
-            ctx.setMensagemRetorno("Rotina não se aplica na TOP de Venda Outlet.");
             return;
         }
-        BigDecimal codparc = (BigDecimal) linha.getCampo("CODPARC");
+        BigDecimal codparc = cabVO.asBigDecimal("CODPARC");
         if (!codParcFranqueado(codparc)) {
-            ctx.setMensagemRetorno("Rotina só se aplica a parceiros franqueados.");
             return;
         }
-        BigDecimal nunota = (BigDecimal) linha.getCampo("NUNOTA");
-        Timestamp dtEntSai = (Timestamp) linha.getCampo("DTENTSAI");
-        BigDecimal codUsuLogado = ctx.getUsuarioLogado();
+        Timestamp dtEntSai = cabVO.asTimestamp("DTENTSAI");
 
         String localSep = getLocalSep(codparc);
-        if (localSep == null) {
-            ctx.mostraErro("Local de separação não informado no cadastro de parceiro.");
-        }
 
         JapeWrapper daoItem = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
         Collection<DynamicVO> collectionItensNota = daoItem.find(" NUNOTA = ?", nunota);
@@ -93,7 +79,6 @@ public class Substituicao implements AcaoRotinaJava {
                 }
             }
         }
-        ctx.setMensagemRetorno("DePara Executado com sucesso!");
     }
 
     private void registraAlteracaoLOG(BigDecimal codprodDE, BigDecimal codUsuLogado, Timestamp dtEntSai, BigDecimal nunota, String msg) throws Exception {
@@ -179,7 +164,11 @@ public class Substituicao implements AcaoRotinaJava {
     private String getLocalSep(BigDecimal codparc) {
         try {
             DynamicVO parceiroVO = JapeFactory.dao(DynamicEntityNames.PARCEIRO).findByPK(codparc);
-            return parceiroVO.asString("AD_LOCALSEPARACAO");
+            String localSep = parceiroVO.asString("AD_LOCALSEPARACAO");
+            if (localSep == null) {
+                localSep = "1";
+            }
+            return localSep;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -1,4 +1,4 @@
-package br.com.sankhya.truss.util;
+package br.com.sankhya.truss.corte.depara.util;
 
 import br.com.sankhya.jape.vo.DynamicVO;
 import br.com.sankhya.jape.vo.VOProperty;

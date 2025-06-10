@@ -1,4 +1,4 @@
-package br.com.sankhya.truss.tempDePara.eventos;
+package br.com.sankhya.truss.corte.depara.events;
 
 import br.com.sankhya.extensions.eventoprogramavel.EventoProgramavelJava;
 import br.com.sankhya.jape.event.PersistenceEvent;
