@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import br.com.sankhya.truss.corte.depara.actions.SubstituicaoExec;
 import org.jdom.Element;
 
 import com.sankhya.util.TimeUtils;
@@ -47,7 +48,7 @@ public class CorteGlobal implements AcaoRotinaJava {
 	@Override
 	public void doAction(ContextoAcao ctx) throws Exception {
 		// TODO Auto-generated method stub
-
+		BigDecimal codUsuLogado = ctx.getUsuarioLogado();
 		JapeWrapper cabDAO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA);
 		JapeWrapper parDAO = JapeFactory.dao(DynamicEntityNames.PARCEIRO);
 
@@ -63,6 +64,9 @@ public class CorteGlobal implements AcaoRotinaJava {
 
 			for(Registro linha : linhas) {
 				BigDecimal nunota = (BigDecimal) linha.getCampo("NUNOTA");
+
+				SubstituicaoExec rotinaDePara = new SubstituicaoExec();
+				rotinaDePara.acao(nunota,codUsuLogado);
 
 				DynamicVO cabVO = cabDAO.findByPK(nunota);
 				DynamicVO parVO = parDAO.findByPK(cabVO.asBigDecimal("CODPARC"));

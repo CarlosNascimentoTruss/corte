@@ -78,13 +78,12 @@ tasks.clean {
     println("dist removido")
 }
 
-tasks.register('Gerar Jar Modelo - btacao', Jar) {
-    group = "daniel"
-    archiveBaseName.set("btacao-${versaoFinal}")
+tasks.register('DePara', Jar) {
+    group = "export"
+    archiveBaseName.set("custom-dePara-${versaoFinal}")
     destinationDirectory.set(file("dist"))
-    include 'br/com/sankhya/dstech/helper/**'
-    include 'br/com/sankhya/dctm/inventario/botaoacao/**'
-    //destinationDirectory.set(file("$buildDir/outputDir"))
+    include 'br/com/sankhya/truss/tempDePara/**'
+    include 'br/com/sankhya/truss/util/Duplicate.class'
     from {
         sourceSets.main.output
     }
