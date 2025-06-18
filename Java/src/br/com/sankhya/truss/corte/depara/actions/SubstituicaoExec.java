@@ -23,13 +23,16 @@ import java.util.Collection;
 public class SubstituicaoExec {
 
     public void acao(BigDecimal nunota, BigDecimal codUsuLogado) throws Exception {
-        DynamicVO cabVO = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA).findByPK(nunota);
+        JapeWrapper daoCAB = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA);
+        DynamicVO cabVO = daoCAB.findByPK(nunota);
+        daoCAB.prepareToUpdateByPK(nunota).set("AD_DESCONSCORTE", "S").update();
+
         BigDecimal codtipoper = cabVO.asBigDecimal("CODTIPOPER");
         if (codtipoper.compareTo(new BigDecimal("3187")) == 0) {
             return;
         }
         BigDecimal codparc = cabVO.asBigDecimal("CODPARC");
-        if (!codParcFranqueado(codparc)) {
+        if (!parcFranqueado(codparc)) {
             return;
         }
         Timestamp dtEntSai = cabVO.asTimestamp("DTENTSAI");
@@ -79,6 +82,7 @@ public class SubstituicaoExec {
                 }
             }
         }
+        daoCAB.prepareToUpdateByPK(nunota).set("AD_DESCONSCORTE", null).update();
     }
 
     private void registraAlteracaoLOG(BigDecimal codprodDE, BigDecimal codUsuLogado, Timestamp dtEntSai, BigDecimal nunota, String msg) throws Exception {
@@ -192,7 +196,7 @@ public class SubstituicaoExec {
         BigDecimal para = BigDecimal.ZERO;
         JapeWrapper deParaProdDAO = JapeFactory.dao("AD_DEPARAPROD");
         try {
-            Collection<DynamicVO> collection = deParaProdDAO.find(" DE = ? AND ? BETWEEN INIVIGENCIA AND FINVIGENCIA", codprod, dtEntSai);
+            Collection<DynamicVO> collection = deParaProdDAO.find(" DE = ? AND ? BETWEEN INIVIGENCIA AND FINVIGENCIA AND ATIVO = 'S'", codprod, dtEntSai);
             if (!collection.isEmpty()) {
                 DynamicVO deParaVO = collection.iterator().next();
                 para = deParaVO.asBigDecimal("PARA");
@@ -204,7 +208,7 @@ public class SubstituicaoExec {
         return para;
     }
 
-    private boolean codParcFranqueado(BigDecimal codparc) {
+    private boolean parcFranqueado(BigDecimal codparc) {
         try {
             DynamicVO parceiroVO = JapeFactory.dao(DynamicEntityNames.PARCEIRO).findByPK(codparc);
             BigDecimal codtipparc = parceiroVO.asBigDecimal("CODTIPPARC");
