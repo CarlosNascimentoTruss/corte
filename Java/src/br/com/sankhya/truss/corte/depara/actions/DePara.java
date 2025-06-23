@@ -81,6 +81,7 @@ public class DePara {
                      atualizaTotais(nunota, sequencia);
                 }else{
                     duplicarItem(itemVO,codProdOriginal,qtdAtendidaProdOriginal);
+                    qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendidaProdOriginal);
                 }
             }
 
@@ -104,12 +105,19 @@ public class DePara {
                     qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendida);
                 }
             }
+
+            if(qtdAtendidaProdOriginal.compareTo(BigDecimal.ZERO) > 0){
+                BigDecimal qtdnegProdOriginal = daoItem.findByPK(new Object[]{nunota, sequencia}).asBigDecimal("QTDNEG");
+                qtdnegProdOriginal = qtdnegProdOriginal.add(qtdAtendidaProdOriginal);
+                daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdnegProdOriginal).update();
+                atualizaTotais(nunota, sequencia);
+            }
         }
         daoCAB.prepareToUpdateByPK(nunota).set("AD_DESCONSCORTE", null).update();
     }
 
     private ArrayList<DynamicVO> getRegras(BigDecimal codProd, Timestamp dtEntSai, String busca, BigDecimal codEmp, BigDecimal codLocal) {
-        String contrapartida = busca.equals("DE")?"para":"DE";
+        String contrapartida = busca.equals("DE")?"PARA":"DE";
         ArrayList<DynamicVO> listDeParaVO = new ArrayList<>();
         JapeWrapper daoDePara = JapeFactory.dao("AD_DEPARAPROD");
         JdbcWrapper jdbc = null;
