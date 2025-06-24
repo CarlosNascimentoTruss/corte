@@ -99,7 +99,7 @@ public class ImportarCSV implements AcaoRotinaJava {
                             continue;
                         }
 
-                        String[] colunas = linha.split(";");
+                        String[] colunas = linha.split("[;,]");
 
                         // Verificar se tem pelo menos 3 colunas
                         if (colunas.length >= 4) {
@@ -180,6 +180,7 @@ public class ImportarCSV implements AcaoRotinaJava {
         fluidCreateVO.set("FINVIGENCIA", finVigenciaTS);
         fluidCreateVO.set("MOTIVO", motivo);
         fluidCreateVO.set("IMPORTADO", "S");
+        fluidCreateVO.set("ATIVO", "S");
         fluidCreateVO.set("SEQ", seq);
 
         try {

@@ -49,6 +49,8 @@ public class DePara {
             BigDecimal qtdNegOriginal = itemVO.asBigDecimal("QTDNEG");
             BigDecimal qtdParaContemplar = qtdNegOriginal;
             BigDecimal codlocal = itemVO.asBigDecimal("CODLOCALORIG");
+            boolean updateNoProdOriginal = false;
+            System.out.println(" --- Iniciando rotina do DePara " + codProdOriginal);
 
             ArrayList<DynamicVO> regrasSuperiores = getRegras(codProdOriginal,dtEntSai,"PARA",codEmp,codlocal);
             for (int i = 0; i < regrasSuperiores.size() && qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0; i++){
@@ -61,27 +63,36 @@ public class DePara {
                     if(qtdAtendida.compareTo(qtdParaContemplar) == 0){
                         daoItem.prepareToUpdate(itemVO).set("CODPROD", codProdDE).set("QTDNEG",qtdAtendida).update();
                         atualizaTotais(nunota, sequencia);
+                        System.out.println("Atualizado produto original para produto DE" + codProdDE + " qtd " + qtdAtendida);
                     }else{
                         duplicarItem(itemVO,codProdDE,qtdAtendida);
+                        System.out.println("Inserido produto DE " + codProdDE + " qtd " + qtdAtendida);
                     }
                     mensagemRegra.append(qtdAtendida).append(" do produto ").append(codProdOriginal).append(" substituido pelo produto ").append(codProdDE);
                     registraAlteracaoLOG(codProdDE,codUsuLogado,dtEntSai,nunota,mensagemRegra.toString());
 
                     qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendida);
+                    System.out.println("Qtd para contemplar " + qtdParaContemplar);
                 }
             }
 
             BigDecimal qtdAtendidaProdOriginal = getQtdAtendida(codProdOriginal, codlocal, localSep, qtdParaContemplar);
-            if(qtdAtendidaProdOriginal.compareTo(BigDecimal.ZERO) > 0 && qtdParaContemplar.compareTo(BigDecimal.ZERO) == 0){
+            if(qtdAtendidaProdOriginal.compareTo(BigDecimal.ZERO) > 0 && qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0){
                 if (qtdNegOriginal.compareTo(qtdAtendidaProdOriginal) == 0) {
-                    return;
+                    System.out.println("Produto original tinha estoque total (não fez alterações)" + qtdAtendidaProdOriginal);
+                    continue;
                 }
+
+                daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdAtendidaProdOriginal).update();
+                atualizaTotais(nunota, sequencia);
+                updateNoProdOriginal = true;
+
                 if(qtdAtendidaProdOriginal.compareTo(qtdParaContemplar) == 0) {
-                     daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdAtendidaProdOriginal).update();
-                     atualizaTotais(nunota, sequencia);
+                     System.out.println("Produto original tinha estoque para contemplar o saldo remanescente" + qtdAtendidaProdOriginal);
+                     continue;
                 }else{
-                    duplicarItem(itemVO,codProdOriginal,qtdAtendidaProdOriginal);
                     qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendidaProdOriginal);
+                    System.out.println("Produto original tinha estoque parcial " + qtdAtendidaProdOriginal);
                 }
             }
 
@@ -93,24 +104,22 @@ public class DePara {
                 if(qtdAtendida.compareTo(BigDecimal.ZERO) > 0){
                     StringBuilder mensagemRegra = new StringBuilder();
                     mensagemRegra.append("Regra Inferior: ");
-                    if(qtdAtendida.compareTo(qtdParaContemplar) == 0){
-                        daoItem.prepareToUpdate(itemVO).set("CODPROD", codProdPARA).set("QTDNEG",qtdAtendida).update();
-                        atualizaTotais(nunota, sequencia);
-                    }else{
-                        duplicarItem(itemVO,codProdPARA,qtdAtendida);
-                    }
+                    duplicarItem(itemVO,codProdPARA,qtdAtendida);
                     mensagemRegra.append(qtdAtendida).append(" do produto ").append(codProdOriginal).append(" substituido pelo produto ").append(codProdPARA);
                     registraAlteracaoLOG(codProdPARA,codUsuLogado,dtEntSai,nunota,mensagemRegra.toString());
-
                     qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendida);
                 }
             }
 
-            if(qtdAtendidaProdOriginal.compareTo(BigDecimal.ZERO) > 0){
-                BigDecimal qtdnegProdOriginal = daoItem.findByPK(new Object[]{nunota, sequencia}).asBigDecimal("QTDNEG");
-                qtdnegProdOriginal = qtdnegProdOriginal.add(qtdAtendidaProdOriginal);
+            if(qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0 && updateNoProdOriginal){
+                BigDecimal qtdnegProdOriginal = qtdAtendidaProdOriginal.add(qtdParaContemplar);
                 daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdnegProdOriginal).update();
                 atualizaTotais(nunota, sequencia);
+            }else if(qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0 && !updateNoProdOriginal){
+                daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdParaContemplar).update();
+                atualizaTotais(nunota, sequencia);
+            }else if(qtdParaContemplar.compareTo(BigDecimal.ZERO) == 0 && !updateNoProdOriginal){
+                daoItem.deleteByCriteria(" NUNOTA = ? AND SEQUENCIA = ? ",nunota, sequencia);
             }
         }
         daoCAB.prepareToUpdateByPK(nunota).set("AD_DESCONSCORTE", null).update();
@@ -156,8 +165,14 @@ public class DePara {
                     BigDecimal seq = rset.getBigDecimal("SEQ");
                     DynamicVO deParaVO = daoDePara.findByPK(seq);
                     BigDecimal codProdContrapartida = deParaVO.asBigDecimal(contrapartida);
-                    listDeParaVO.addAll(getRegras(codProdContrapartida,dtEntSai,busca,codEmp,codLocal));
-                    listDeParaVO.add(deParaVO);
+                    if(busca.equals("PARA")){
+                        listDeParaVO.addAll(getRegras(codProdContrapartida,dtEntSai,busca,codEmp,codLocal));
+                        listDeParaVO.add(deParaVO);
+                    }else{
+                        listDeParaVO.add(deParaVO);
+                        listDeParaVO.addAll(getRegras(codProdContrapartida,dtEntSai,busca,codEmp,codLocal));
+                    }
+
                 }while (rset.next());
             }
         } catch (Exception e) {
