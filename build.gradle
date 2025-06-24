@@ -78,12 +78,11 @@ tasks.clean {
     println("dist removido")
 }
 
-tasks.register('DePara', Jar) {
+tasks.register('Corte', Jar) {
     group = "export"
-    archiveBaseName.set("custom-dePara-${versaoFinal}")
+    archiveBaseName.set("corte-${versaoFinal}")
     destinationDirectory.set(file("dist"))
-    include 'br/com/sankhya/truss/tempDePara/**'
-    include 'br/com/sankhya/truss/util/Duplicate.class'
+    include 'br/com/sankhya/truss/corte/**'
     from {
         sourceSets.main.output
     }
@@ -97,9 +96,6 @@ tasks.register('Gerar Jar Modelo - eventos', Jar) {
     from {
         sourceSets.main.output
     }
-    //from('Java/resources') {
-    //    include 'pasta/*.sql'
-    //}
 }
 
 

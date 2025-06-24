@@ -78,7 +78,9 @@ public class ImportarCSV implements AcaoRotinaJava {
                 );
 
                 // Verificar se é CSV
-                if (!metadata.contains("\"type\":\"text/csv\"") && !metadata.contains("\"type\":\"application/octet-stream\"")) {
+                if (!metadata.contains("\"type\":\"text/csv\"") &&
+                        !metadata.contains("\"type\":\"application/octet-stream\"") &&
+                        !metadata.contains("\"type\":\"application/vnd.ms-excel\"")) {
                     ctx.mostraErro("Não é um arquivo CSV.");
                 }
 
@@ -100,17 +102,12 @@ public class ImportarCSV implements AcaoRotinaJava {
                         String[] colunas = linha.split(";");
 
                         // Verificar se tem pelo menos 3 colunas
-                        if (colunas.length >= 4) {
+                        if (colunas.length >= 5) {
                             String de = colunas[0].trim();
                             String para = colunas[1].trim();
                             String iniVigencia = colunas[2].trim();
                             String finVigencia = colunas[3].trim();
-                            String motivo;
-                            if(colunas.length >= 5) {
-                                motivo = colunas[4].trim();
-                            }else{
-                                motivo = null;
-                            }
+                            String motivo = colunas[4].trim();
 
                             validaDePara(de, para, iniVigencia, finVigencia, motivo, ctx);
 

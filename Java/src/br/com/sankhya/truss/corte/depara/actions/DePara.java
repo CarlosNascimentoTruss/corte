@@ -18,9 +18,10 @@ import com.sankhya.util.JdbcUtils;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 
-public class SubstituicaoExec {
+public class DePara {
 
     public void acao(BigDecimal nunota, BigDecimal codUsuLogado) throws Exception {
         JapeWrapper daoCAB = JapeFactory.dao(DynamicEntityNames.CABECALHO_NOTA);
@@ -36,6 +37,7 @@ public class SubstituicaoExec {
             return;
         }
         Timestamp dtEntSai = cabVO.asTimestamp("DTENTSAI");
+        BigDecimal codEmp = cabVO.asBigDecimal("CODEMP");
 
         String localSep = getLocalSep(codparc);
 
@@ -43,46 +45,145 @@ public class SubstituicaoExec {
         Collection<DynamicVO> collectionItensNota = daoItem.find(" NUNOTA = ?", nunota);
         for (DynamicVO itemVO : collectionItensNota) {
             BigDecimal sequencia = itemVO.asBigDecimal("SEQUENCIA");
-            BigDecimal codprodDE = itemVO.asBigDecimal("CODPROD");
-            BigDecimal qtdneg = itemVO.asBigDecimal("QTDNEG");
+            BigDecimal codProdOriginal = itemVO.asBigDecimal("CODPROD");
+            BigDecimal qtdNegOriginal = itemVO.asBigDecimal("QTDNEG");
+            BigDecimal qtdParaContemplar = qtdNegOriginal;
             BigDecimal codlocal = itemVO.asBigDecimal("CODLOCALORIG");
-            BigDecimal multiploDE = getMultiplo(codprodDE);
-            BigDecimal qtdAtendidaDE = getQtdAtendida(codprodDE, codlocal, multiploDE, localSep, qtdneg);
-            if (qtdAtendidaDE.compareTo(BigDecimal.ZERO) == 0) {
-                BigDecimal codprodPARA = getCodProdPARA(codprodDE, dtEntSai);
-                if (codprodPARA.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal multiploPARA = getMultiplo(codprodPARA);
-                    BigDecimal qtdAtendidaPARA = getQtdAtendida(codprodPARA, codlocal, multiploPARA, localSep, qtdneg);
-                    if (qtdAtendidaPARA.compareTo(qtdneg) == 0) {
-                        daoItem.prepareToUpdate(itemVO).set("CODPROD", codprodPARA).update();
+            boolean updateNoProdOriginal = false;
+            System.out.println(" --- Iniciando rotina do DePara " + codProdOriginal);
+
+            ArrayList<DynamicVO> regrasSuperiores = getRegras(codProdOriginal,dtEntSai,"PARA",codEmp,codlocal);
+            for (int i = 0; i < regrasSuperiores.size() && qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0; i++){
+                DynamicVO regraSuperior = regrasSuperiores.get(i);
+                BigDecimal codProdDE = regraSuperior.asBigDecimal("DE");
+                BigDecimal qtdAtendida = getQtdAtendida(codProdDE,codlocal,localSep,qtdParaContemplar);
+                if(qtdAtendida.compareTo(BigDecimal.ZERO) > 0){
+                    StringBuilder mensagemRegra = new StringBuilder();
+                    mensagemRegra.append("Regra Superior: ");
+                    if(qtdAtendida.compareTo(qtdParaContemplar) == 0){
+                        daoItem.prepareToUpdate(itemVO).set("CODPROD", codProdDE).set("QTDNEG",qtdAtendida).update();
                         atualizaTotais(nunota, sequencia);
-                        registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"TOTAL: " + qtdneg + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
-                    } else if (qtdAtendidaPARA.compareTo(qtdneg) < 0 && qtdAtendidaPARA.compareTo(BigDecimal.ZERO) > 0) {
-                        duplicarItem(itemVO, codprodPARA, qtdAtendidaPARA);
-                        BigDecimal corte = qtdneg.subtract(qtdAtendidaPARA);
-                        daoItem.prepareToUpdate(itemVO).set("QTDNEG", corte).update();
-                        atualizaTotais(nunota, sequencia);
-                        registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"PARCIAL: " + qtdAtendidaPARA + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
+                        System.out.println("Atualizado produto original para produto DE" + codProdDE + " qtd " + qtdAtendida);
+                    }else{
+                        duplicarItem(itemVO,codProdDE,qtdAtendida);
+                        System.out.println("Inserido produto DE " + codProdDE + " qtd " + qtdAtendida);
                     }
+                    mensagemRegra.append(qtdAtendida).append(" do produto ").append(codProdOriginal).append(" substituido pelo produto ").append(codProdDE);
+                    registraAlteracaoLOG(codProdDE,codUsuLogado,dtEntSai,nunota,mensagemRegra.toString());
+
+                    qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendida);
+                    System.out.println("Qtd para contemplar " + qtdParaContemplar);
                 }
             }
 
-            if (qtdAtendidaDE.compareTo(BigDecimal.ZERO) > 0 && qtdAtendidaDE.compareTo(qtdneg) < 0) {
-                BigDecimal codprodPARA = getCodProdPARA(codprodDE, dtEntSai);
-                if (codprodPARA.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal multiploPARA = getMultiplo(codprodPARA);
-                    BigDecimal qtdParaRestante = qtdneg.subtract(qtdAtendidaDE);
-                    BigDecimal qtdAtendidaPARA = getQtdAtendida(codprodPARA, codlocal, multiploPARA, localSep, qtdParaRestante);
-                    if (qtdAtendidaPARA.compareTo(qtdParaRestante) <= 0) {
-                        duplicarItem(itemVO, codprodPARA, qtdAtendidaPARA);
-                        BigDecimal corte = qtdneg.subtract(qtdAtendidaPARA);
-                        daoItem.prepareToUpdate(itemVO).set("QTDNEG", corte).update();
-                        registraAlteracaoLOG(codprodDE,codUsuLogado,dtEntSai,nunota,"PARCIAL: " + qtdAtendidaPARA + " do produto " + codprodDE + " substituido pelo produto " + codprodPARA);
-                    }
+            BigDecimal qtdAtendidaProdOriginal = getQtdAtendida(codProdOriginal, codlocal, localSep, qtdParaContemplar);
+            if(qtdAtendidaProdOriginal.compareTo(BigDecimal.ZERO) > 0 && qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0){
+                if (qtdNegOriginal.compareTo(qtdAtendidaProdOriginal) == 0) {
+                    System.out.println("Produto original tinha estoque total (não fez alterações)" + qtdAtendidaProdOriginal);
+                    continue;
                 }
+
+                daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdAtendidaProdOriginal).update();
+                atualizaTotais(nunota, sequencia);
+                updateNoProdOriginal = true;
+
+                if(qtdAtendidaProdOriginal.compareTo(qtdParaContemplar) == 0) {
+                     System.out.println("Produto original tinha estoque para contemplar o saldo remanescente" + qtdAtendidaProdOriginal);
+                     continue;
+                }else{
+                    qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendidaProdOriginal);
+                    System.out.println("Produto original tinha estoque parcial " + qtdAtendidaProdOriginal);
+                }
+            }
+
+            ArrayList<DynamicVO> regrasInferiores = getRegras(codProdOriginal,dtEntSai,"DE",codEmp,codlocal);
+            for (int i = 0; i < regrasInferiores.size() && qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0; i++){
+                DynamicVO regraInferior = regrasInferiores.get(i);
+                BigDecimal codProdPARA = regraInferior.asBigDecimal("PARA");
+                BigDecimal qtdAtendida = getQtdAtendida(codProdPARA,codlocal,localSep,qtdParaContemplar);
+                if(qtdAtendida.compareTo(BigDecimal.ZERO) > 0){
+                    StringBuilder mensagemRegra = new StringBuilder();
+                    mensagemRegra.append("Regra Inferior: ");
+                    duplicarItem(itemVO,codProdPARA,qtdAtendida);
+                    mensagemRegra.append(qtdAtendida).append(" do produto ").append(codProdOriginal).append(" substituido pelo produto ").append(codProdPARA);
+                    registraAlteracaoLOG(codProdPARA,codUsuLogado,dtEntSai,nunota,mensagemRegra.toString());
+                    qtdParaContemplar = qtdParaContemplar.subtract(qtdAtendida);
+                }
+            }
+
+            if(qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0 && updateNoProdOriginal){
+                BigDecimal qtdnegProdOriginal = qtdAtendidaProdOriginal.add(qtdParaContemplar);
+                daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdnegProdOriginal).update();
+                atualizaTotais(nunota, sequencia);
+            }else if(qtdParaContemplar.compareTo(BigDecimal.ZERO) > 0 && !updateNoProdOriginal){
+                daoItem.prepareToUpdate(itemVO).set("QTDNEG", qtdParaContemplar).update();
+                atualizaTotais(nunota, sequencia);
+            }else if(qtdParaContemplar.compareTo(BigDecimal.ZERO) == 0 && !updateNoProdOriginal){
+                daoItem.deleteByCriteria(" NUNOTA = ? AND SEQUENCIA = ? ",nunota, sequencia);
             }
         }
         daoCAB.prepareToUpdateByPK(nunota).set("AD_DESCONSCORTE", null).update();
+    }
+
+    private ArrayList<DynamicVO> getRegras(BigDecimal codProd, Timestamp dtEntSai, String busca, BigDecimal codEmp, BigDecimal codLocal) {
+        String contrapartida = busca.equals("DE")?"PARA":"DE";
+        ArrayList<DynamicVO> listDeParaVO = new ArrayList<>();
+        JapeWrapper daoDePara = JapeFactory.dao("AD_DEPARAPROD");
+        JdbcWrapper jdbc = null;
+        NativeSql sql = null;
+        ResultSet rset = null;
+        JapeSession.SessionHandle hnd = null;
+
+        try {
+            hnd = JapeSession.open();
+            hnd.setFindersMaxRows(-1);
+            EntityFacade entity = EntityFacadeFactory.getDWFFacade();
+            jdbc = entity.getJdbcWrapper();
+            jdbc.openSession();
+
+            sql = new NativeSql(jdbc);
+            sql.appendSql("SELECT X.SEQ FROM ( ");
+            sql.appendSql("        SELECT ");
+            sql.appendSql("        DP.*, ");
+            sql.appendSql("        (SELECT MIN(DTVAL) FROM TGFEST E WHERE E.CODPROD = DP." + busca + " AND E.CODEMP = :CODEMP AND E.CODLOCAL = :CODLOCAL) AS MINVAL ");
+            sql.appendSql("FROM AD_DEPARAPROD DP ");
+            sql.appendSql("WHERE DP." + busca + " = :CODPROD ");
+            sql.appendSql("AND DP.ATIVO = 'S' ");
+            sql.appendSql("AND :DTENTSAI BETWEEN DP.INIVIGENCIA AND DP.FINVIGENCIA ");
+            sql.appendSql(") X ");
+            sql.appendSql("ORDER BY MINVAL ASC");
+
+            sql.setNamedParameter("CODEMP", codEmp);
+            sql.setNamedParameter("CODLOCAL", codLocal);
+            sql.setNamedParameter("CODPROD", codProd);
+            sql.setNamedParameter("DTENTSAI", dtEntSai);
+
+            rset = sql.executeQuery();
+
+            if (rset.next()) {
+                do {
+                    BigDecimal seq = rset.getBigDecimal("SEQ");
+                    DynamicVO deParaVO = daoDePara.findByPK(seq);
+                    BigDecimal codProdContrapartida = deParaVO.asBigDecimal(contrapartida);
+                    if(busca.equals("PARA")){
+                        listDeParaVO.addAll(getRegras(codProdContrapartida,dtEntSai,busca,codEmp,codLocal));
+                        listDeParaVO.add(deParaVO);
+                    }else{
+                        listDeParaVO.add(deParaVO);
+                        listDeParaVO.addAll(getRegras(codProdContrapartida,dtEntSai,busca,codEmp,codLocal));
+                    }
+
+                }while (rset.next());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            JdbcUtils.closeResultSet(rset);
+            NativeSql.releaseResources(sql);
+            JdbcWrapper.closeSession(jdbc);
+            JapeSession.close(hnd);
+        }
+        return listDeParaVO;
     }
 
     private void registraAlteracaoLOG(BigDecimal codprodDE, BigDecimal codUsuLogado, Timestamp dtEntSai, BigDecimal nunota, String msg) throws Exception {
@@ -114,15 +215,15 @@ public class SubstituicaoExec {
         }
     }
 
-    private void duplicarItem(DynamicVO itemVO, BigDecimal codprodPARA, BigDecimal qtdAtendidaPARA) {
+    private void duplicarItem(DynamicVO itemVO, BigDecimal codprod, BigDecimal qtdAtendida) {
         BigDecimal nunota = itemVO.asBigDecimal("NUNOTA");
         JapeWrapper daoItem = JapeFactory.dao(DynamicEntityNames.ITEM_NOTA);
         try {
             FluidCreateVO newItem = Duplicate.duplicate(daoItem, itemVO);
             BigDecimal nextSeqItem = getSeqItem(nunota);
             newItem.set("SEQUENCIA", nextSeqItem);
-            newItem.set("CODPROD", codprodPARA);
-            newItem.set("QTDNEG", qtdAtendidaPARA);
+            newItem.set("CODPROD", codprod);
+            newItem.set("QTDNEG", qtdAtendida);
             newItem.save();
 
             atualizaTotais(nunota, nextSeqItem);
@@ -192,22 +293,6 @@ public class SubstituicaoExec {
         return multiplo;
     }
 
-    private BigDecimal getCodProdPARA(BigDecimal codprod, Timestamp dtEntSai) {
-        BigDecimal para = BigDecimal.ZERO;
-        JapeWrapper deParaProdDAO = JapeFactory.dao("AD_DEPARAPROD");
-        try {
-            Collection<DynamicVO> collection = deParaProdDAO.find(" DE = ? AND ? BETWEEN INIVIGENCIA AND FINVIGENCIA AND ATIVO = 'S'", codprod, dtEntSai);
-            if (!collection.isEmpty()) {
-                DynamicVO deParaVO = collection.iterator().next();
-                para = deParaVO.asBigDecimal("PARA");
-                return para;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return para;
-    }
-
     private boolean parcFranqueado(BigDecimal codparc) {
         try {
             DynamicVO parceiroVO = JapeFactory.dao(DynamicEntityNames.PARCEIRO).findByPK(codparc);
@@ -221,7 +306,8 @@ public class SubstituicaoExec {
         return false;
     }
 
-    private BigDecimal getQtdAtendida(BigDecimal codprod, BigDecimal codlocal, BigDecimal multiplicador, String localSep, BigDecimal qtdneg) throws MGEModelException {
+    private BigDecimal getQtdAtendida(BigDecimal codprod, BigDecimal codlocal, String localSep, BigDecimal qtdneg) throws MGEModelException {
+        BigDecimal multiplicador = getMultiplo(codprod);
         JdbcWrapper jdbc = null;
         NativeSql sql = null;
         ResultSet rset = null;
